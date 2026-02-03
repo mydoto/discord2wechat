@@ -1,8 +1,5 @@
-很好 — 我会给你一个可直接运行的 Python 实现（单向：Discord -> 企业微信机器人 webhook），包含：
 
-- 一个异步、生产就绪的脚本（使用 discord.py + aiohttp）
-- .env 示例、requirements.txt、Dockerfile
-- 说明（如何创建企业微信 webhook、启用 Discord Message Content Intent、部署方式）
+监控Discord消息，同步推送到企业微信。
 
 说明与部署步骤（简要）：
 1. 在 Discord 开发者面板创建 Bot，保存 Bot Token。
