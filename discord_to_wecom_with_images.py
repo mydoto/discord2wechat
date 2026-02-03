@@ -161,9 +161,28 @@ async def on_ready():
 
 @client.event
 async def on_message(message: discord.Message):
-    # 忽略机器人的消息
-    if message.author.bot:
+    # 忽略自己发出的消息，避免循环转发
+    if message.author.id == client.user.id:
         return
+
+    # 可选：若想明确忽略某些机器人（按 id 列表），可通过环境变量 IGNORE_BOT_IDS 指定
+    # 例如: IGNORE_BOT_IDS="11111111111111111,22222222222222222"
+    ignore_bot_ids_env = os.getenv("IGNORE_BOT_IDS", "").strip()
+    if ignore_bot_ids_env:
+        try:
+            ignore_bot_ids = {int(x.strip()) for x in ignore_bot_ids_env.split(",") if x.strip()}
+        except ValueError:
+            ignore_bot_ids = set()
+        if getattr(message.author, "id", None) in ignore_bot_ids:
+            return
+
+    # 如果需要跳过已被标记为“已转发”的消息（避免循环），可检查一个标记字符串
+    FORWARD_MARKER = os.getenv("FORWARD_MARKER", "")  # 可设置为例如 "[转发自WeCom]"
+    if FORWARD_MARKER:
+        # 如果内容包含该标记，认为已经被转发过，跳过
+        content = message.content or ""
+        if FORWARD_MARKER in content:
+            return
 
     # 频道白名单
     if allowed_channel_ids and getattr(message.channel, "id", None) not in allowed_channel_ids:
@@ -198,7 +217,6 @@ async def on_message(message: discord.Message):
                 # 如果图片过大，退回到发送 URL（或你可选择缩放后再发送）
                 if len(data) > MAX_IMAGE_BYTES:
                     logging.warning("图片过大 (%s bytes), 附上 URL 而非原图", len(data))
-                    # 发送一条包含文件名 + URL 的文本
                     fallback_text = f"附件（过大，未发送原图）: {attachment.filename or 'file'}\n{attachment.url}"
                     await send_text_to_wecom(session, fallback_text)
                 else:
